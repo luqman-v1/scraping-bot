@@ -3,11 +3,10 @@ package tokopedia
 import (
 	"context"
 	"log"
-	"os"
-	"scraping/curl"
 	"scraping/entity"
-	"scraping/mongodb"
-	"scraping/telegram"
+	curl2 "scraping/repo/curl"
+	mongodb2 "scraping/repo/mongodb"
+	telegram2 "scraping/repo/telegram"
 
 	"github.com/PuerkitoBio/goquery"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,9 +16,8 @@ type Config struct {
 	Uri string
 }
 
-func GetProduct(ctx context.Context) []entity.Product {
-	url := os.Getenv("PRODUCT_URL")
-	res := curl.Get(url)
+func GetProduct(ctx context.Context, url string) []entity.Product {
+	res := curl2.Get(url)
 	if res.StatusCode != 200 {
 		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
 	}
@@ -45,11 +43,11 @@ func GetProduct(ctx context.Context) []entity.Product {
 	return rows
 }
 
-func SendNotif(ctx context.Context) {
+func SendNotif(ctx context.Context, url string) {
 	log.Println("Send Notif Trigred")
-	rows := GetProduct(ctx)
+	rows := GetProduct(ctx, url)
 	result := make([]entity.Product, 0)
-	rest := mongodb.Find(ctx, bson.M{}, result)
+	rest := mongodb2.Find(ctx, bson.M{}, result, entity.Scrapings)
 	products := rest.([]entity.Product)
 	m := map[string]entity.Product{}
 	for _, product := range products {
@@ -63,11 +61,11 @@ func SendNotif(ctx context.Context) {
 					"💵" + row.Price + "\n" +
 					"🔗" + row.URL + "\n" +
 					"📍" + row.Location
-			err := telegram.Send(message)
+			err := telegram2.Send(message)
 			if err != nil {
 				return
 			}
-			_ = mongodb.Insert(ctx, row)
+			_ = mongodb2.Insert(ctx, row, entity.Scrapings)
 		}
 	}
 }

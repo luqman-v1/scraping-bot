@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
-	"scraping/cron"
-	"scraping/mongodb"
+	cron2 "scraping/repo/cron"
+	mongodb2 "scraping/repo/mongodb"
+	"scraping/route"
 
 	"github.com/joho/godotenv"
 )
@@ -16,10 +16,7 @@ func main() {
 		log.Println("Error loading .env file")
 	}
 	ctx := context.Background()
-	_ = mongodb.Conn(ctx)
-	cron.RunJob(ctx)
-	_ = http.ListenAndServe("0.0.0.0:8443", nil)
-	if err != nil {
-		return
-	}
+	_ = mongodb2.Conn(ctx)
+	cron2.RunJob(ctx)
+	route.Run()
 }

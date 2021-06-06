@@ -3,8 +3,12 @@ package cron
 import (
 	"context"
 	"log"
-	"scraping/tokopedia"
+	"scraping/entity"
+	mongodb2 "scraping/repo/mongodb"
+	tokopedia2 "scraping/repo/tokopedia"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/robfig/cron/v3"
 )
@@ -20,7 +24,12 @@ func RunJob(ctx context.Context) {
 	c := cron.New(cron.WithLocation(loc))
 
 	_, err := c.AddFunc(CRON, func() {
-		tokopedia.SendNotif(ctx)
+		result := make([]entity.Link, 0)
+		rest := mongodb2.Find(ctx, bson.M{}, result, entity.Links)
+		links := rest.([]entity.Link)
+		for _, link := range links {
+			tokopedia2.SendNotif(ctx, link.Url)
+		}
 	})
 	if err != nil {
 		log.Println("err", err)
