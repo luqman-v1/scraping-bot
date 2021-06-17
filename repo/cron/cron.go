@@ -14,7 +14,7 @@ import (
 )
 
 const TimeZone = "Asia/Jakarta"
-const CRON = "10 * * * *"
+const CRON = "*/10 * * * *"
 
 // RunJob process to execute cron job
 func RunJob(ctx context.Context) {
